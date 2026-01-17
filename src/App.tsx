@@ -17,7 +17,7 @@ function App() {
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
-  const [pool, setPool] = useState<boolean[]>([]);
+  const [_pool, setPool] = useState<boolean[]>([]);
   const [message, setMessage] = useState('TAP A BOX TO START');
 
   const generatePool = () => {
