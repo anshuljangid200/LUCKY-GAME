@@ -8,7 +8,8 @@ interface BoxState {
   status: BoxStatus;
 }
 
-const TOTAL_BOXES = 9;
+const TOTAL_BOXES = 16;
+const POOL_SIZE = 5;
 
 function App() {
   const [boxes, setBoxes] = useState<BoxState[]>([]);
@@ -16,7 +17,15 @@ function App() {
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
+  const [_pool, setPool] = useState<boolean[]>([]);
   const [message, setMessage] = useState('TAP A BOX TO START');
+
+  const generatePool = () => {
+    // 1 win in 5 rounds
+    const newPool = Array(POOL_SIZE).fill(false);
+    newPool[Math.floor(Math.random() * POOL_SIZE)] = true;
+    return newPool;
+  };
 
   const initializeGame = useCallback(() => {
     const initialBoxes = Array.from({ length: TOTAL_BOXES }, (_, i) => ({
@@ -24,7 +33,17 @@ function App() {
       status: 'idle' as BoxStatus,
     }));
     setBoxes(initialBoxes);
-    setWinningId(Math.floor(Math.random() * TOTAL_BOXES));
+
+    setPool((prevPool) => {
+      let currentPool = [...prevPool];
+      if (currentPool.length === 0) {
+        currentPool = generatePool();
+      }
+      const currentRoundStatus = currentPool.pop();
+      setWinningId(currentRoundStatus ? Math.floor(Math.random() * TOTAL_BOXES) : null);
+      return currentPool;
+    });
+
     setGameOver(false);
     setMessage('TAP A BOX TO START');
   }, []);
@@ -38,15 +57,13 @@ function App() {
   const handleBoxClick = (id: number) => {
     if (gameOver) return;
 
-    const isWin = id === winningId;
+    const isWin = winningId !== null && id === winningId;
 
     setBoxes((prev) =>
       prev.map((box) => {
-        // If the box clicked is the winner
         if (box.id === id) {
           return { ...box, status: isWin ? 'winning' : 'losing' };
         }
-        // If the box is the secret winner but wasn't clicked, reveal it as winning
         if (box.id === winningId) {
           return { ...box, status: 'winning' };
         }
@@ -55,16 +72,16 @@ function App() {
     );
 
     if (isWin) {
-      const newScore = score + 10;
+      const newScore = score + 20; // More points for hard mode
       setScore(newScore);
       if (newScore > bestScore) {
         setBestScore(newScore);
         localStorage.setItem('lucky-game-best', newScore.toString());
       }
-      setMessage('🎉 MAGNIFICENT WIN!');
+      setMessage('🎉 ELITE WIN!');
     } else {
       setScore(0);
-      setMessage('💥 ALMOST! BUT UNLUCKY');
+      setMessage(winningId !== null ? '💥 SO CLOSE...' : '💥 NO LUCK THIS TIME');
     }
 
     setGameOver(true);
