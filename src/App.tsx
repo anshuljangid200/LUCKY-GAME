@@ -9,7 +9,6 @@ interface BoxState {
 }
 
 const TOTAL_BOXES = 9;
-const POOL_SIZE = 8;
 
 function App() {
   const [boxes, setBoxes] = useState<BoxState[]>([]);
@@ -17,15 +16,7 @@ function App() {
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
-  const [_pool, setPool] = useState<boolean[]>([]);
   const [message, setMessage] = useState('TAP A BOX TO START');
-
-  const generatePool = () => {
-    // Generate a pool of 8 rounds: 1 win, 7 losses
-    const newPool = Array(POOL_SIZE).fill(false);
-    newPool[Math.floor(Math.random() * POOL_SIZE)] = true;
-    return newPool;
-  };
 
   const initializeGame = useCallback(() => {
     const initialBoxes = Array.from({ length: TOTAL_BOXES }, (_, i) => ({
@@ -33,22 +24,7 @@ function App() {
       status: 'idle' as BoxStatus,
     }));
     setBoxes(initialBoxes);
-
-    setPool((prevPool) => {
-      let currentPool = [...prevPool];
-      if (currentPool.length === 0) {
-        currentPool = generatePool();
-      }
-
-      const currentRoundStatus = currentPool.pop();
-
-      // If this round is a winner, pick a random box to be the winning box
-      // If it's a loser round, winningId = null (no box will win)
-      setWinningId(currentRoundStatus ? Math.floor(Math.random() * TOTAL_BOXES) : null);
-
-      return currentPool;
-    });
-
+    setWinningId(Math.floor(Math.random() * TOTAL_BOXES));
     setGameOver(false);
     setMessage('TAP A BOX TO START');
   }, []);
@@ -62,7 +38,7 @@ function App() {
   const handleBoxClick = (id: number) => {
     if (gameOver) return;
 
-    const isWin = winningId !== null && id === winningId;
+    const isWin = id === winningId;
 
     setBoxes((prev) =>
       prev.map((box) => {
@@ -88,11 +64,7 @@ function App() {
       setMessage('🎉 MAGNIFICENT WIN!');
     } else {
       setScore(0);
-      if (winningId !== null) {
-        setMessage('💥 ALMOST! BUT UNLUCKY');
-      } else {
-        setMessage('💥 NO WINNER THIS ROUND');
-      }
+      setMessage('💥 ALMOST! BUT UNLUCKY');
     }
 
     setGameOver(true);
@@ -107,9 +79,7 @@ function App() {
 
       <div className="game-container fade-up">
         <h1>MYSTIC GRID</h1>
-        <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '-1rem' }}>
-          RATIO: 1 WIN PER 8 ROUNDS
-        </p>
+
 
         <div className="stats">
           <div className="stat-item">SCORE <span>{score}</span></div>
